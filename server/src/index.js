@@ -61,21 +61,9 @@ Server.use("/create", (request, response) => {
 });
 
 Server.use("/getmosaic", (request, response) => {
+    //Extraigo la IP
     let ipAddress = request.headers['x-forwarded-for'] || request.connection.remoteAddress;
-    //Busco segun IP
-    // mosaic.find({ip:ipAddress},(error, data) => {
-    //     if (error) {
-    //         // en caso de error mando 404
-    //         response.status(404);
-    //         response.json(error);
-    //     } else {
-    //         // en caso de que todo salga correcto enviamos la respuesta.
-    //         auxData = data;
-    //         response.status(200);
-    //         response.json(data);
-    //     }
-    // });
-
+    //Hago la busqueda
     mosaic.find({ip:ipAddress})
     .then((data, error) => {
         if (error) {
@@ -83,13 +71,28 @@ Server.use("/getmosaic", (request, response) => {
             response.status(404);
             response.json(error);
         } else {
-            // en caso de que todo salga correcto enviamos la respuesta.
+            //existen registros, debo chequear si alguno de esos fue reciente
             if(data.length > 0){
-                response.status(200);
-                response.json(data);
+                let bool = true; //flag
+                for (let i = 0; i < data.length; i++) {
+                    const element = data[i];
+                    //Chequeo la edad del mosaico que le pertenece a la IP
+                    if(!FUNCTIONS.oneMinuteDiff(element.age)){
+                        //No hay mas de un minuto, no puedo tomar otro mosaico
+                        bool = false
+                        break;
+                    };
+                }
+                if(bool){
+                    //PUEDE ACCEDER A OTRO MOSAICO
+
+                }else{
+                    //NO PUEDE ACCEDER AL MOSAICO
+
+                }
             }else{
-                response.status(200);
-                response.json(data);
+                //No existen registros, puedo acceder al mosaico
+                
             }
         }
     });
