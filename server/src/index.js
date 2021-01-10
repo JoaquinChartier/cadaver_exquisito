@@ -1,6 +1,7 @@
 // importando dependencias y credenciales
 const Express = require("express");
 const { connect } = require("mongoose");
+const bodyParser = require("body-parser");
 const { mosaic } = require("./schema.js");
 const CREDENTIALS = require("./credentials.json");
 const FUNCTIONS = require("./functions.js");
@@ -13,57 +14,23 @@ const DATA_BASE = "database";
 const CONECTOR = `mongodb+srv://${USER}:${PASSWORD}@cluster0.s00yx.mongodb.net/${DATA_BASE}?retryWrites=true&w=majority`;
 const OPTIONS = {useNewUrlParser: true,useUnifiedTopology: true};
 
-// Server.use("/checkvacancy", (request, response) => {
-//     let ipAddress = request.headers['x-forwarded-for'] || request.connection.remoteAddress;
-//     // let body = JSON.parse(request);
-//     // body = body.body;
-//     // Chequea si el mosaic esta disponible
-//     response = FUNCTIONS.getByIp(ipAddress);
-// });
+// configuramos la app para que use bodyParser(), esto nos dejara usar la informacion de los POST
+Server.use(bodyParser.urlencoded({ extended: true }));
+Server.use(bodyParser.json());
 
-Server.use("/getbyip", (request, response) => {
-    //Busco segun IP
-    mosaic.find({ip:'192.168.0.1'},(error, data) => {
-        if (error) {
-            // en caso de error mando 404
-            response.status(404);
-            response.json(error);
-        } else {
-            // en caso de que todo salga correcto enviamos la respuesta.
-            response.status(200);
-            response.json(data);
-        }
-    });
-});
-
-Server.use("/create", (request, response) => {
-    let ipAddress = request.headers['x-forwarded-for'] || request.connection.remoteAddress;
-    const DATA = {
-        ip: 'kokokokokko',
-        x:12,
-        y:46,
-        color:'black',
-        age:18
-    };
-    const MOSAIC = new mosaic(DATA);
-    MOSAIC.save((error, data) => {
-        // En caso de error mostramos el problema
-        if (error) {
-            // console.log(error);
-            response.status(404);
-            response.json(error);
-        } else {
-            // en caso de que todo salga correcto enviamos la respuesta.
-            response.status(200);
-            response.json(data); //data
-        }
-    });
-});
-
-Server.use("/getmosaic", (request, response) => {
+Server.post("/getmosaic", (request, response) => {
     //Extraigo la IP
     let ipAddress = request.headers['x-forwarded-for'] || request.connection.remoteAddress;
-    //Hago la busqueda
+    //Armo el request
+    let AUXDATA = {
+        ip: ipAddress,
+        x:request.body.x,
+        y:request.body.y,
+        color:request.body.color,
+        age:FUNCTIONS.getCurrentUnixTime()
+    };
+    //console.log('edad data: ',AUXDATA.age)
+    //Busco si la persona tiene mosaicos
     mosaic.find({ip:ipAddress})
     .then((data, error) => {
         if (error) {
@@ -71,81 +38,94 @@ Server.use("/getmosaic", (request, response) => {
             response.status(404);
             response.json(error);
         } else {
-            //existen registros, debo chequear si alguno de esos fue reciente
+            //Si este PARM esta en true puede acceder a otro mosaico
+            let canGetMosaic = false
             if(data.length > 0){
+                //existen registros de mosaicos, debo chequear si alguno de esos fue reciente
                 let bool = true; //flag
                 for (let i = 0; i < data.length; i++) {
-                    const element = data[i];
                     //Chequeo la edad del mosaico que le pertenece a la IP
-                    if(!FUNCTIONS.oneMinuteDiff(element.age)){
-                        //No hay mas de un minuto, no puedo tomar otro mosaico
+                    if(!FUNCTIONS.oneMinuteDiff(data[i].age)){
+                        //No hay mas de un minuto, NO puedo tomar otro mosaico
+                        console.log('No hay mas de un minuto de dif')
                         bool = false
                         break;
                     };
                 }
                 if(bool){
                     //PUEDE ACCEDER A OTRO MOSAICO
-
+                    console.log('Puede acceder a otro mosaico')
+                    canGetMosaic = true
                 }else{
-                    //NO PUEDE ACCEDER AL MOSAICO
-
+                    //NO PUEDE ACCEDER AL MOSAICO, porque uno de esos mosaicos es reciente
+                    console.log('No puede acceder, porque uno de sus mosaicos es reciente')
+                    canGetMosaic = false
                 }
             }else{
                 //No existen registros, puedo acceder al mosaico
-                
+                console.log('puede acceder, todavia no tiene mosaicos')
+                canGetMosaic = true
+            }
+            //Puede acceder al mosaico
+            if (canGetMosaic){
+                //PRIMERO CHEQUEO QUE EL MOSAICO NO ESTE OCUPADO YA
+                mosaic.find({x:AUXDATA.x, y:AUXDATA.y})
+                .then((data, error) => {
+                    console.log('data',data)
+                    if (error) {
+                        // en caso de error mando 404
+                        response.status(404);
+                        response.json(error);
+                    } else {
+                        if (!(data.length > 0)){
+                            //Si no tiene datos, puede tomar el mosaico, lo guardo a la DB
+                            const NEW_MOSAIC = new mosaic(AUXDATA);
+                            NEW_MOSAIC.save((error, data) => {
+                                if (error) {
+                                    response.status(404);
+                                    response.json(error);
+                                } else {
+                                    console.log('toma el mosaico, success')
+                                    response.status(200);
+                                    response.json('SUCCESS');
+                                }
+                            });
+                        }else{
+                            console.log('el mosaico esta ocupado chequeo edad')
+                            //El mosaico ya esta ocupado, chequeo la edad
+                            let can = FUNCTIONS.oneMinuteDiff(data[0].age);
+                            if(can){
+                                console.log('edad mosaico a ocupar',data[0].age)
+                                //HAY MAS DE UN MINUTO, puedo tomar el mosaic
+                                const NEW_MOSAIC = new mosaic(AUXDATA);
+                                NEW_MOSAIC.save((error, data) => {
+                                    if (error) {
+                                        response.status(404);
+                                        response.json(error);
+                                    } else {
+                                        console.log('le otorgo el mosaico')
+                                        response.status(200);
+                                        response.json('SUCCESS');
+                                    }
+                                });
+                            }else{
+                                //No hay mas de un minuto, NO puedo tomar otro mosaico
+                                console.log('no hay mas de un minuto, no le doy el mosaic')
+                                response.status(200);
+                                response.json('REJECTED');
+                            };
+                        }
+                    }
+                });
+            }else{
+                //NO PUEDE ACCEDER A OTRO MOSAICO
+                console.log('no puede acceder a otro mosaico')
+                response.status(200);
+                response.json('REJECTED');
             }
         }
     });
 });
-
-// // Router para crear datos de manera aleatoria
-// Server.use("/random", (request, response) => {
-//     // Se consiguen los nodos del archivo FakeData
-//     const { names, lastNames } = FakeData;
-//     // Consiguiendo un index de manera aleatoria
-//     const NAME = Math.floor(Math.random() * (names.length - 0));
-//     const LAST_NAME = Math.floor(Math.random() * (lastNames.length - 0));
-//     // Preparando los datos que seran enviados a mongodb
-//     const DATA = {
-//         name: names[NAME],
-//         lastName: lastNames[LAST_NAME],
-//         age: NAME * 2,
-//         random: NAME * LAST_NAME
-//     };
-
-//     // Se indica que se crea un nuevo registro
-//     const AGENDA = new agenda(DATA);
-
-//     // Se recibe la respuesta generada al crear un nuevo registro.
-//     AGENDA.save((error, data) => {
-//         // En caso de error mostramos el problema
-//         if (error) {
-//             // console.log(error);
-//             response.status(404);
-//             response.json(error);
-//         } else {
-//             // en caso de que todo salga correcto enviamos la respuesta.
-//             response.status(200);
-//             response.json(data); //data
-//         }
-//     });
-// });
-
-// // Routere para consultar todos los datos generados.
-// Server.use("/", (request, response) => {
-//     // Generamos una busqueda completa.
-//     agenda.find({}, (error, data) => {
-//         // En caso de error mostramos el problema
-//         if (error) {
-//             response.status(404);
-//             response.json(error);
-//         } else {
-//              // en caso de que todo salga correcto enviamos la respuesta.
-//             response.status(200);
-//             response.json('empty request'); //data
-//         }
-//     });
-// });
 
 // Abriendo la conexión a mongoDB Atlas
 connect(CONECTOR, OPTIONS, MongoError => {
