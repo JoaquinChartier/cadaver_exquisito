@@ -1,13 +1,13 @@
 // importando dependencias y credenciales
 const Express = require("express");
-const { connect } = require("mongoose");
 const bodyParser = require("body-parser");
+const { connect } = require("mongoose");
 const { mosaic } = require("./schema.js");
 const CREDENTIALS = require("./credentials.json");
 const FUNCTIONS = require("./functions.js");
-const Server = Express();
 
-// Parametros de conexion
+// Parametros de conexion y server
+const Server = Express();
 const USER = CREDENTIALS.USER;
 const PASSWORD = CREDENTIALS.PASSWORD;
 const DATA_BASE = "database";
@@ -18,7 +18,7 @@ const OPTIONS = {useNewUrlParser: true,useUnifiedTopology: true};
 Server.use(bodyParser.urlencoded({ extended: true }));
 Server.use(bodyParser.json());
 
-Server.post("/getmosaic", (request, response) => {
+Server.post("/buymosaic", (request, response) => {
     //Extraigo la IP
     let ipAddress = request.headers['x-forwarded-for'] || request.connection.remoteAddress;
     //Armo el request

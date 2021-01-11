@@ -1,3 +1,9 @@
+export let baseResponse:any = {
+    status:"",
+    reason:"",
+    message:""
+}
+
 export function getCurrentUnixTime() : number{
     //Busco la hora actual the unix
     let ts:number = Math.round((new Date()).getTime() / 1000);
