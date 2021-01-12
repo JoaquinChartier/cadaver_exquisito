@@ -1,7 +1,7 @@
 "use strict";
 let widthMosaics = 100;
 let heightMosaics = 60;
-let serverUrl = 'http://localhost:8080/';
+let serverUrl = 'https://testing-node-js5.herokuapp.com/';
 function drawCanva() {
     let str = '';
     let widthCount = 0;

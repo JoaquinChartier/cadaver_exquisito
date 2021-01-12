@@ -135,7 +135,7 @@ connect(CONECTOR, OPTIONS, MongoError => {
             process.exit(1);
         }
         // se inicia el servidor
-        Server.listen(8080, error => {
+        Server.listen(process.env.PORT || 5000, error => {
             // En caso de error indicamos el problemas
             if (error) {
                 console.error(error);

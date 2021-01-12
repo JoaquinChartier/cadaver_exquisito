@@ -1,6 +1,6 @@
 let widthMosaics:number = 100; //Cantidad de mosaicos que conforman el ancho
 let heightMosaics:number = 60; //Cantidad de mosaicos que conforman el largo
-let serverUrl:string = 'http://localhost:8080/'; 
+let serverUrl:string = 'https://testing-node-js5.herokuapp.com/'//'http://localhost:8080/'; 
 //const CREDENTIALS = require("./credentials.json");
 
 function drawCanva(){
