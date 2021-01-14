@@ -14,3 +14,15 @@
     border-color: black;
     border-width: 1px;
 }
+
+.lateral-container {
+    display: none;
+    align-items:center;
+    justify-items: center;
+    flex-direction: column;
+    padding: 10px;
+}
+
+body {
+    display: flex;
+}

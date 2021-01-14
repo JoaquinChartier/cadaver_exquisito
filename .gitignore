@@ -3,3 +3,4 @@ server/node_modules/
 client/ts/node_modules
 client/src/credentials.json
 notes.txt
+client/debug.log

@@ -1,6 +1,7 @@
 // importando dependencias y credenciales
 const Express = require("express");
 const bodyParser = require("body-parser");
+const cors = require ("cors");
 const { connect } = require("mongoose");
 const { mosaic } = require("./schema.js");
 const CREDENTIALS = require("./credentials.json");
@@ -12,11 +13,27 @@ const USER = CREDENTIALS.USER;
 const PASSWORD = CREDENTIALS.PASSWORD;
 const DATA_BASE = "database";
 const CONECTOR = `mongodb+srv://${USER}:${PASSWORD}@cluster0.s00yx.mongodb.net/${DATA_BASE}?retryWrites=true&w=majority`;
-const OPTIONS = {useNewUrlParser: true,useUnifiedTopology: true};
+const OPTIONS = {useNewUrlParser: true,useUnifiedTopology: true, useFindAndModify: false};
 
 // configuramos la app para que use bodyParser(), esto nos dejara usar la informacion de los POST
+Server.use(cors());
 Server.use(bodyParser.urlencoded({ extended: true }));
 Server.use(bodyParser.json());
+
+Server.post("/getall", (request, response) => {
+    mosaic.find({})
+    .then((data, error) => {
+        if (error) {
+            // en caso de error mando 404
+            response.status(404);
+            response.json(error);
+        } else {
+            response.status(200);
+            response.json(data);
+        }
+    })
+    .catch(err => console.log(err));
+});
 
 Server.post("/buymosaic", (request, response) => {
     //Extraigo la IP
@@ -29,7 +46,8 @@ Server.post("/buymosaic", (request, response) => {
         color:request.body.color,
         age:FUNCTIONS.getCurrentUnixTime()
     };
-    //console.log('edad data: ',AUXDATA.age)
+    console.log('request, body: ',request.body)
+    console.log('body data: ', AUXDATA);
     //Busco si la persona tiene mosaicos
     mosaic.find({ip:ipAddress})
     .then((data, error) => {
@@ -97,9 +115,11 @@ Server.post("/buymosaic", (request, response) => {
                             if(can){
                                 console.log('edad mosaico a ocupar',data[0].age)
                                 //HAY MAS DE UN MINUTO, puedo tomar el mosaic
-                                const NEW_MOSAIC = new mosaic(AUXDATA);
-                                NEW_MOSAIC.save((error, data) => {
+                                //const NEW_MOSAIC = new mosaic(AUXDATA);
+                                mosaic.findOneAndUpdate({ x: AUXDATA.x, y: AUXDATA.y }, AUXDATA, {upsert: true})
+                                .then((data, error) => {
                                     if (error) {
+                                        console.log('error al update: ', error);
                                         response.status(404);
                                         response.json(error);
                                     } else {
@@ -141,7 +161,7 @@ connect(CONECTOR, OPTIONS, MongoError => {
                 console.error(error);
                 process.exit(1);
             }
-            console.log("Conexión establecida, ir a: 'http://localhost:8080/'");
+            console.log("Conexión establecida, ir a: 'http://localhost:5000/'");
         });
     }
 );
