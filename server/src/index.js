@@ -5,7 +5,7 @@ const { connect } = require("mongoose");
 const { mosaic } = require("./schema.js");
 const CREDENTIALS = require("./credentials.json");
 const FUNCTIONS = require("./functions.js");
-const WebSocket = require('ws');
+const Pusher = require("pusher");
 // Parametros de conexion y server
 const Server = Express();
 const USER = CREDENTIALS.USER;
@@ -16,23 +16,20 @@ const OPTIONS = {useNewUrlParser: true,useUnifiedTopology: true, useFindAndModif
 
 Server.use(cors());
 
-//Socket
-const wss = new WebSocket.Server({ port:4433 }); // 
+//Pusher para realtime
+const pusher = new Pusher({
+    appId: CREDENTIALS.appId,
+    key: CREDENTIALS.key,
+    secret: CREDENTIALS.secret,
+    cluster: "mt1",
+    useTLS: true
+});
 
 function broadcastData(dataToSend){
     /*Emito en modo broadcast a todos los conectados */
-    let aux = '';
-    if (typeof(dataToSend) != 'string'){
-        aux = JSON.stringify(dataToSend);
-    }else{
-        aux = dataToSend;
-    }
-    
-    wss.clients.forEach(function each(client) {
-        if (client.readyState === WebSocket.OPEN) {
-            client.send(aux);
-        }
-      });
+    pusher.trigger("channel-updates", "updates", {
+        dataToSend
+    });
 }
 
 Server.use(Express.json());
@@ -165,8 +162,6 @@ Server.post("/buymosaic", (request, response) => {
         }
     });
 });
-
-
 
 // Abriendo la conexión a mongoDB Atlas
 connect(CONECTOR, OPTIONS, MongoError => {
