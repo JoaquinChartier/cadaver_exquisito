@@ -2,8 +2,10 @@
 let widthMosaics = 100;
 let heightMosaics = 60;
 let mainCollection = [];
-let serverUrl = 'https://testing-node-js5.herokuapp.com/';
+let serverUrlProd = 'https://testing-node-js5.herokuapp.com/';
+let serverUrlLocal = 'http://localhost:5000/';
 let selectedMosaic;
+let socket = new WebSocket('ws://localhost:4433');
 class Mosaic {
     constructor(x, y, color) {
         this.x = x;
@@ -59,7 +61,7 @@ function basicRequest(mode, body, fullURL) {
 }
 function buyMosaicFirstStep(body) {
     return new Promise((resolve, reject) => {
-        let url = serverUrl + 'buymosaic';
+        let url = serverUrlLocal + 'buymosaic';
         basicRequest('POST', body, url)
             .then(data => {
             resolve(data);
@@ -69,7 +71,7 @@ function buyMosaicFirstStep(body) {
 }
 function getAllMosaics() {
     return new Promise((resolve, reject) => {
-        let url = serverUrl + 'getall';
+        let url = serverUrlLocal + 'getall';
         basicRequest('POST', '', url)
             .then(data => {
             mainCollection = data;
@@ -109,4 +111,10 @@ window.onload = function () {
     drawCanva();
     setListener();
     drawMosaics();
+    socket.onopen = function (event) {
+        console.log('WS connected!');
+    };
+    socket.onmessage = function (event) {
+        console.log(event.data);
+    };
 };

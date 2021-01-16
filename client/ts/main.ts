@@ -1,9 +1,10 @@
 let widthMosaics:number = 100; //Cantidad de mosaicos que conforman el ancho
 let heightMosaics:number = 60; //Cantidad de mosaicos que conforman el largo
 let mainCollection:any[] = []; //Coleccion donde se almacenan los mosaicos
-let serverUrl:string = 'https://testing-node-js5.herokuapp.com/'//'http://localhost:8080/';
+let serverUrlProd:string = 'https://testing-node-js5.herokuapp.com/'//'http://localhost:8080/';
+let serverUrlLocal:string = 'http://localhost:5000/'
 let selectedMosaic:Mosaic; //El mosaico seleccionado actualmente
-//const CREDENTIALS = require("./credentials.json");
+let socket = new WebSocket('ws://localhost:4433'); //:4433 //'ws://localhost:4433' //ws://testing-node-js5.herokuapp.com
 
 class Mosaic{
     x:number;
@@ -49,7 +50,6 @@ async function drawMosaics(){
         console.log('DRAW MOSAICS OK');
     })
     .catch(err => console.log(err));
-    
 }
 
 function basicRequest(mode:string, body:string, fullURL:string) : Promise<any> {
@@ -74,7 +74,7 @@ function basicRequest(mode:string, body:string, fullURL:string) : Promise<any> {
 function buyMosaicFirstStep(body:string) : Promise<any>{
     //Tomo un solo mosaico
     return new Promise((resolve, reject) => {
-        let url:string =  serverUrl+'buymosaic'
+        let url:string =  serverUrlLocal+'buymosaic'
         basicRequest('POST',body,url)
         .then(data => {
             resolve(data);
@@ -86,7 +86,7 @@ function buyMosaicFirstStep(body:string) : Promise<any>{
 function getAllMosaics() : Promise<any>{
     //Traigo todos los mosaicos
     return new Promise((resolve, reject) => {
-        let url:string =  serverUrl+'getall';
+        let url:string =  serverUrlLocal+'getall';
         basicRequest('POST','', url)
         .then(data => {
             mainCollection = data;
@@ -130,4 +130,12 @@ window.onload = function(){
     drawCanva();
     setListener();
     drawMosaics();
+
+    socket.onopen = function(event){
+        console.log('WS connected!');
+    }
+
+    socket.onmessage = function(event){
+        console.log(event.data);
+    }
 }

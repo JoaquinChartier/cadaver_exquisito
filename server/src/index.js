@@ -1,12 +1,11 @@
 // importando dependencias y credenciales
 const Express = require("express");
-const bodyParser = require("body-parser");
 const cors = require ("cors");
 const { connect } = require("mongoose");
 const { mosaic } = require("./schema.js");
 const CREDENTIALS = require("./credentials.json");
 const FUNCTIONS = require("./functions.js");
-
+const WebSocket = require('ws');
 // Parametros de conexion y server
 const Server = Express();
 const USER = CREDENTIALS.USER;
@@ -15,10 +14,28 @@ const DATA_BASE = "database";
 const CONECTOR = `mongodb+srv://${USER}:${PASSWORD}@cluster0.s00yx.mongodb.net/${DATA_BASE}?retryWrites=true&w=majority`;
 const OPTIONS = {useNewUrlParser: true,useUnifiedTopology: true, useFindAndModify: false};
 
-// configuramos la app para que use bodyParser(), esto nos dejara usar la informacion de los POST
 Server.use(cors());
-Server.use(bodyParser.urlencoded({ extended: true }));
-Server.use(bodyParser.json());
+
+//Socket
+const wss = new WebSocket.Server({ port:4433 }); // 
+
+function broadcastData(dataToSend){
+    /*Emito en modo broadcast a todos los conectados */
+    let aux = '';
+    if (typeof(dataToSend) != 'string'){
+        aux = JSON.stringify(dataToSend);
+    }else{
+        aux = dataToSend;
+    }
+    
+    wss.clients.forEach(function each(client) {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(aux);
+        }
+      });
+}
+
+Server.use(Express.json());
 
 Server.post("/getall", (request, response) => {
     mosaic.find({})
@@ -103,6 +120,7 @@ Server.post("/buymosaic", (request, response) => {
                                     response.status(404);
                                     response.json(error);
                                 } else {
+                                    broadcastData({ x: AUXDATA.x, y: AUXDATA.y, color: AUXDATA.color })
                                     console.log('toma el mosaico, success')
                                     response.status(200);
                                     response.json('SUCCESS');
@@ -123,6 +141,7 @@ Server.post("/buymosaic", (request, response) => {
                                         response.status(404);
                                         response.json(error);
                                     } else {
+                                        broadcastData({ x: AUXDATA.x, y: AUXDATA.y, color: AUXDATA.color })
                                         console.log('le otorgo el mosaico')
                                         response.status(200);
                                         response.json('SUCCESS');
@@ -146,6 +165,8 @@ Server.post("/buymosaic", (request, response) => {
         }
     });
 });
+
+
 
 // Abriendo la conexión a mongoDB Atlas
 connect(CONECTOR, OPTIONS, MongoError => {
