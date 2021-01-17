@@ -27,14 +27,13 @@ const pusher = new Pusher({
 
 function broadcastData(dataToSend){
     /*Emito en modo broadcast a todos los conectados */
-    pusher.trigger("channel-updates", "updates", {
-        dataToSend
-    });
+    pusher.trigger("channel-updates", "updates", { dataToSend });
 }
 
 Server.use(Express.json());
 
 Server.post("/getall", (request, response) => {
+    //Envio todos los mosaicos
     mosaic.find({})
     .then((data, error) => {
         if (error) {
@@ -117,7 +116,7 @@ Server.post("/buymosaic", (request, response) => {
                                     response.status(404);
                                     response.json(error);
                                 } else {
-                                    broadcastData({ x: AUXDATA.x, y: AUXDATA.y, color: AUXDATA.color })
+                                    broadcastData({ ip: AUXDATA.ip, x: AUXDATA.x, y: AUXDATA.y, color: AUXDATA.color })
                                     console.log('toma el mosaico, success')
                                     response.status(200);
                                     response.json('SUCCESS');
@@ -138,7 +137,7 @@ Server.post("/buymosaic", (request, response) => {
                                         response.status(404);
                                         response.json(error);
                                     } else {
-                                        broadcastData({ x: AUXDATA.x, y: AUXDATA.y, color: AUXDATA.color })
+                                        broadcastData({ ip: AUXDATA.ip, x: AUXDATA.x, y: AUXDATA.y, color: AUXDATA.color })
                                         console.log('le otorgo el mosaico')
                                         response.status(200);
                                         response.json('SUCCESS');

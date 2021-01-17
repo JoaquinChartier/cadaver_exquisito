@@ -1,5 +1,5 @@
 "use strict";
-let widthMosaics = 100;
+let widthMosaics = 115;
 let heightMosaics = 60;
 let mainCollection = [];
 let serverUrlProd = 'https://testing-node-js5.herokuapp.com/';
@@ -36,11 +36,16 @@ async function drawMosaics() {
         console.log(mainCollection);
         for (let i = 0; i < mainCollection.length; i++) {
             const element = mainCollection[i];
-            const currentId = `${element.x}-${element.y}`;
-            const currentMosaic = document === null || document === void 0 ? void 0 : document.getElementById(currentId);
-            currentMosaic.setAttribute('style', `background:${element.color}`);
+            try {
+                const currentId = `${element.x}-${element.y}`;
+                const currentMosaic = document === null || document === void 0 ? void 0 : document.getElementById(currentId);
+                currentMosaic.setAttribute('style', `background:${element.color}`);
+            }
+            catch {
+                console.log(`failed to draw: ${element.x}-${element.y}`);
+            }
         }
-        console.log('DRAW MOSAICS OK');
+        console.log('DRAW MOSAICS SUCCESFULL');
     })
         .catch(err => console.log(err));
 }
@@ -87,7 +92,7 @@ function setListener() {
         let y = Number(e.target.id.split('-')[1]);
         let color = "";
         selectedMosaic = new Mosaic(x, y, color);
-        $('.lateral-container').css('display', 'flex');
+        $('.card').css('display', 'block');
     });
 }
 function buyMosaicFinalStep() {
@@ -97,10 +102,7 @@ function buyMosaicFinalStep() {
         .then(data => {
         if (data == 'SUCCESS') {
             console.log(data);
-            let currentId = `${selectedMosaic.x}-${selectedMosaic.y}`;
-            let mosaic = document === null || document === void 0 ? void 0 : document.getElementById(currentId);
-            mosaic.setAttribute('style', `background:${selectedMosaic.color}`);
-            $('.lateral-container').css('display', 'none');
+            $('.card').css('display', 'none');
         }
         else {
             console.log(data);
@@ -108,11 +110,18 @@ function buyMosaicFinalStep() {
     })
         .catch(err => console.log(err));
 }
+function drawOneMosaic(mosaicData) {
+    let currentId = `${mosaicData.x}-${mosaicData.y}`;
+    let mosaic = document === null || document === void 0 ? void 0 : document.getElementById(currentId);
+    mosaic.setAttribute('style', `background:${mosaicData.color}`);
+    mainCollection.push(mosaicData);
+    console.log(mainCollection);
+}
 window.onload = function () {
     drawCanva();
     setListener();
     drawMosaics();
     channel.bind('updates', function (data) {
-        console.log(data);
+        drawOneMosaic(data.dataToSend);
     });
 };

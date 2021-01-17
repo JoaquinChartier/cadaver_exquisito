@@ -1,4 +1,5 @@
-let widthMosaics:number = 100; //Cantidad de mosaicos que conforman el ancho
+//Exquisite corpse
+let widthMosaics:number = 115; //Cantidad de mosaicos que conforman el ancho
 let heightMosaics:number = 60; //Cantidad de mosaicos que conforman el largo
 let mainCollection:any[] = []; //Coleccion donde se almacenan los mosaicos
 let serverUrlProd:string = 'https://testing-node-js5.herokuapp.com/'
@@ -44,11 +45,15 @@ async function drawMosaics(){
         console.log(mainCollection);
         for (let i = 0; i < mainCollection.length; i++) {
             const element = mainCollection[i];
-            const currentId:string = `${element.x}-${element.y}`;
-            const currentMosaic:any = document?.getElementById(currentId);
-            currentMosaic.setAttribute('style',`background:${element.color}`);
+            try {
+                const currentId:string = `${element.x}-${element.y}`;
+                const currentMosaic:any = document?.getElementById(currentId);
+                currentMosaic.setAttribute('style',`background:${element.color}`);
+            } catch {
+                console.log(`failed to draw: ${element.x}-${element.y}`)
+            }
         }
-        console.log('DRAW MOSAICS OK');
+        console.log('DRAW MOSAICS SUCCESFULL');
     })
     .catch(err => console.log(err));
 }
@@ -73,7 +78,7 @@ function basicRequest(mode:string, body:string, fullURL:string) : Promise<any> {
 }
 
 function buyMosaicFirstStep(body:string) : Promise<any>{
-    //Tomo un solo mosaico
+    //Tomo un solo mosaico, PRIMER PASO
     return new Promise((resolve, reject) => {
         let url:string =  serverUrlProd+'buymosaic'
         basicRequest('POST',body,url)
@@ -104,11 +109,12 @@ function setListener(){
         let y:number = Number(e.target.id.split('-')[1]);
         let color:string = "";
         selectedMosaic = new Mosaic(x,y,color);
-        $('.lateral-container').css('display','flex');
+        $('.card').css('display','block'); //lateral-container
     });
 }
 
 function buyMosaicFinalStep(){
+    //Tomo un segundo mosaico, SEGUNDO PASO
     let colorPicker:any = document?.querySelector('#colorPicker');
     selectedMosaic.color = colorPicker.value;
 
@@ -116,15 +122,22 @@ function buyMosaicFinalStep(){
     .then(data => {
         if (data == 'SUCCESS'){
             console.log(data);
-            let currentId = `${selectedMosaic.x}-${selectedMosaic.y}`
-            let mosaic:any = document?.getElementById(currentId);
-            mosaic.setAttribute('style',`background:${selectedMosaic.color}`);
-            $('.lateral-container').css('display','none');
+            $('.card').css('display','none'); //lateral-container
         }else{
             console.log(data);
         }
     })
     .catch(err => console.log(err));
+}
+
+function drawOneMosaic(mosaicData:any){
+    /*Dibujo un solo mosaico, con la data entregada por pusher*/
+    let currentId:string = `${mosaicData.x}-${mosaicData.y}`
+    let mosaic:any = document?.getElementById(currentId);
+    mosaic.setAttribute('style',`background:${mosaicData.color}`);
+
+    mainCollection.push(mosaicData);
+    console.log(mainCollection);
 }
 
 window.onload = function(){
@@ -133,6 +146,7 @@ window.onload = function(){
     drawMosaics();
 
     channel.bind('updates', function(data:any) {
-        console.log(data);
-        });
+        //console.log(data);
+        drawOneMosaic(data.dataToSend);
+    });
 }
