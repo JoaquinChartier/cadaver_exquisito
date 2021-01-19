@@ -15,16 +15,18 @@
     <h2 class="display-4">How to play: pick a square, choose a color, wait a minute.</h2>
     <div class="window">
         <div id="mainDiv" class="main card mb-4"></div>
-        <div id="lateralContainer" class="card mb-4" style="display: none; margin: 10px;max-height: 205px;"> <!--lateral-container-->
+        <div class="card mb-4 tools" style="margin: 10px;max-height: 400px;"> <!--lateral-container-->
             <div class="card-header">
                 <h4 class="my-0 font-weight-normal" style="margin: 8px;"> Get square </h4>
             </div>
             <div class="card-body lateral">
                 <span>Owned by: </span>
-                <span id="spanOwnedBy" class="spanOwnedBy">192.168.0.1 </span>
+                <span id="spanOwnedBy" class="spanInfo">Nobody</span>
+                <span>Available at: </span>
+                <span id="spanAvailableAt" class="spanInfo">Now</span>
                 <span>Choose color: </span>
                 <input id="colorPicker" type="color" value="#ff0000">
-                <button type="button" id="btnBuy" class="btn btn-lg btn-block btn-primary" onclick="buyMosaicFinalStep()"> - Get - </button>
+                <button type="button" class="btn btn-lg btn-block btn-primary" onclick="buyMosaicFinalStep()"> - Get - </button>
             </div>
         </div>
     </div>

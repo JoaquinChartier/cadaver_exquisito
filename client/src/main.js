@@ -92,7 +92,13 @@ function setListener() {
         let y = Number(e.target.id.split('-')[1]);
         let color = "";
         selectedMosaic = new Mosaic(x, y, color);
-        $('.card').css('display', 'block');
+        getIpAndAge();
+        $('.tools').css('display', 'block');
+    });
+    $('body, .window').on('click', (e) => {
+        if (e.target == e.currentTarget) {
+            $('.tools').css('display', 'none');
+        }
     });
 }
 function buyMosaicFinalStep() {
@@ -102,7 +108,7 @@ function buyMosaicFinalStep() {
         .then(data => {
         if (data == 'SUCCESS') {
             console.log(data);
-            $('.card').css('display', 'none');
+            $('.tools').css('display', 'none');
         }
         else {
             console.log(data);
@@ -116,6 +122,29 @@ function drawOneMosaic(mosaicData) {
     mosaic.setAttribute('style', `background:${mosaicData.color}`);
     mainCollection.push(mosaicData);
     console.log(mainCollection);
+}
+function getCurrentUnixTime() {
+    let ts = Math.round((new Date()).getTime() / 1000);
+    return ts;
+}
+function getIpAndAge() {
+    for (let q = 0; q < mainCollection.length; q++) {
+        const element = mainCollection[q];
+        if (element.x == selectedMosaic.x && element.y == selectedMosaic.y) {
+            $('#spanOwnedBy').html(element.ip);
+            let difSeg = getCurrentUnixTime() - element.age;
+            console.log('dif: ', element.age, getCurrentUnixTime(), difSeg);
+            if (difSeg < 60) {
+                $('#spanAvailableAt').html(`${60 - difSeg} seg.`);
+            }
+            else {
+                $('#spanAvailableAt').html(`Now`);
+            }
+            break;
+        }
+        $('#spanAvailableAt').html(`Now`);
+        $('#spanOwnedBy').html('Nobody');
+    }
 }
 window.onload = function () {
     drawCanva();

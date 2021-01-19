@@ -116,7 +116,7 @@ Server.post("/buymosaic", (request, response) => {
                                     response.status(404);
                                     response.json(error);
                                 } else {
-                                    broadcastData({ ip: AUXDATA.ip, x: AUXDATA.x, y: AUXDATA.y, color: AUXDATA.color })
+                                    broadcastData({ ip: AUXDATA.ip, x: AUXDATA.x, y: AUXDATA.y, color: AUXDATA.color, age: AUXDATA.age})
                                     console.log('toma el mosaico, success')
                                     response.status(200);
                                     response.json('SUCCESS');
@@ -137,7 +137,7 @@ Server.post("/buymosaic", (request, response) => {
                                         response.status(404);
                                         response.json(error);
                                     } else {
-                                        broadcastData({ ip: AUXDATA.ip, x: AUXDATA.x, y: AUXDATA.y, color: AUXDATA.color })
+                                        broadcastData({ ip: AUXDATA.ip, x: AUXDATA.x, y: AUXDATA.y, color: AUXDATA.color, age: AUXDATA.age})
                                         console.log('le otorgo el mosaico')
                                         response.status(200);
                                         response.json('SUCCESS');

@@ -109,7 +109,16 @@ function setListener(){
         let y:number = Number(e.target.id.split('-')[1]);
         let color:string = "";
         selectedMosaic = new Mosaic(x,y,color);
-        $('.card').css('display','block'); //lateral-container
+        getIpAndAge();
+        $('.tools').css('display','block'); //lateral-container
+    });
+
+    $('body, .window').on('click',(e) => {
+        //Capturo el click del mouse en un lugar vacio, para ocultar las tools
+        if (e.target == e.currentTarget){
+            //console.log('clicked',e);
+            $('.tools').css('display','none');
+        }
     });
 }
 
@@ -122,7 +131,7 @@ function buyMosaicFinalStep(){
     .then(data => {
         if (data == 'SUCCESS'){
             console.log(data);
-            $('.card').css('display','none'); //lateral-container
+            $('.tools').css('display','none'); //lateral-container
         }else{
             console.log(data);
         }
@@ -138,6 +147,34 @@ function drawOneMosaic(mosaicData:any){
 
     mainCollection.push(mosaicData);
     console.log(mainCollection);
+}
+
+function getCurrentUnixTime() : number{
+    //Busco la hora actual the unix
+    let ts:number = Math.round((new Date()).getTime() / 1000);
+    return ts;
+}
+
+function getIpAndAge(){
+    /*Busco la data del mosaico que coincida con lo seleccionado */
+    for (let q = 0; q < mainCollection.length; q++) {
+        const element = mainCollection[q];
+        
+        if (element.x == selectedMosaic.x && element.y == selectedMosaic.y) {
+            $('#spanOwnedBy').html(element.ip);
+            let difSeg:number = getCurrentUnixTime() - element.age;
+            console.log('dif: ', element.age, getCurrentUnixTime(), difSeg);
+            if (difSeg < 60) {
+                $('#spanAvailableAt').html(`${60-difSeg} seg.`);   
+            }else{
+                $('#spanAvailableAt').html(`Now`);
+            }
+            break;
+        }
+        
+        $('#spanAvailableAt').html(`Now`);
+        $('#spanOwnedBy').html('Nobody');
+    }
 }
 
 window.onload = function(){
